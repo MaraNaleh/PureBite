@@ -14,6 +14,8 @@ import OrderSummaryScreen from '../OrderSummaryScreen';
 import AdminMenu from '../AdminMenu';
 import PaymentMethodsScreen from '../PaymentMethodsScreen';
 import CartScreen from '../CartScreen';
+import UserRegistration from '../UserRegistration';
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -35,7 +37,7 @@ export default function App() {
       setInitializing(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe(); // Asegúrate de limpiar la suscripción
   }, []);
 
   if (initializing) return null; // Muestra una pantalla de carga opcional
@@ -44,32 +46,42 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator>
         {userRole ? (
-          userRole === 'admin' ? (
-            // Navegación para Admin
-            <Stack.Group>
-              <Stack.Screen name="AdminMenu" component={AdminMenu} />
-              <Stack.Screen name="MainScreen" component={MainScreen} />
-              <Stack.Screen name="MenuScreen" component={MenuScreen} />
-              <Stack.Screen
-                name="ProductDetailScreen"
-                component={ProductDetailScreen}
-                initialParams={{ isAdmin: true }} // Propiedad para identificar a los administradores
-              />
-            </Stack.Group>
-          ) : (
-            // Navegación para Cliente
-            <Stack.Group>
-              <Stack.Screen name="MainScreen" component={MainScreen} />
-              <Stack.Screen name="MenuScreen" component={MenuScreen} />
-              <Stack.Screen name="ProductDetailScreen" component={ProductDetailScreen} initialParams={{ isAdmin: false }} />
-              <Stack.Screen name="OrderSummaryScreen" component={OrderSummaryScreen} />
-              <Stack.Screen name="Cart" component={CartScreen} />
-              <Stack.Screen name="Paymentmethods" component={PaymentMethodsScreen} />
-            </Stack.Group>
-          )
+          // Si el usuario tiene un rol, redirige a MainScreen directamente
+          <Stack.Screen name="MainScreen" component={MainScreen} options={{ headerShown: false }} />
         ) : (
-          // Navegación para el Login
-          <Stack.Screen name="LoginScreen" component={LoginScreen} />
+          // Navegación para el Login y Registro
+          <>
+            <Stack.Screen name="Inicio de Sesion" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="UserR" component={UserRegistration} options={{ headerShown: false }} />
+          </>
+        )}
+        {userRole === 'admin' && (
+          // Navegación para Admin
+          <Stack.Group>
+            <Stack.Screen name="AdminMenu" component={AdminMenu} options={{ headerShown: false }} />
+            <Stack.Screen name="MenuScreen" component={MenuScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="ProductDetailScreen"
+              component={ProductDetailScreen}
+              options={{ headerShown: false }}
+              initialParams={{ isAdmin: true }} // Propiedad para identificar a los administradores
+            />
+          </Stack.Group>
+        )}
+        {userRole !== 'admin' && userRole !== null && (
+          // Navegación para Cliente
+          <Stack.Group>
+            <Stack.Screen name="MenuScreen" component={MenuScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="ProductDetailScreen"
+              component={ProductDetailScreen}
+              options={{ headerShown: false }}
+              initialParams={{ isAdmin: false }} // Propiedad para identificar a los clientes
+            />
+            <Stack.Screen name="OrderSummaryScreen" component={OrderSummaryScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} options={{ headerShown: false }} />
+          </Stack.Group>
         )}
       </Stack.Navigator>
     </NavigationContainer>

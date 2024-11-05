@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: '#556B2F',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   registerButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#556B2F',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',

@@ -45,9 +45,7 @@ const LoginScreen = ({ navigation }) => {
         Alert.alert('Error', 'La contraseña es incorrecta.');
       } else if (error.code === 'auth/invalid-email') {
         Alert.alert('Error', 'El correo electrónico es inválido.');
-      } else {
-        Alert.alert('Error', 'Ocurrió un error inesperado. Intenta nuevamente.');
-      }
+      } 
     }
   };
 
@@ -82,7 +80,7 @@ const LoginScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Ingresar</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('UserRegistration')}>
+      <TouchableOpacity onPress={() => navigation.navigate('UserR')}>
         <Text style={styles.registerText}>¿No tienes una cuenta? Regístrate</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={handleLogout}>

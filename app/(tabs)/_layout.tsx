@@ -8,11 +8,13 @@ import { auth, db } from '../../constants/firebaseConfig';
 
 import AdminMenu from '../AdminMenu';
 import LoginScreen from '../LoginScreen';
+import UserRegistration from '../UserRegistration'; // Asegúrate de importar el componente de registro
 import MainStack from '../MainStack';
 import Top5Screen from '../Top5Screen';
 import MenuScreen from '../MenuScreen';
 import OrderSummary from '../OrderSummaryScreen';
 import { Icon } from '@rneui/themed';
+import CartScreen from '../CartScreen';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -48,8 +50,10 @@ type RootStackParamList = {
   Menu: undefined;
   Top5: undefined;
   "Inicio de Sesion": undefined;
+  "Registro de Usuario": undefined; // Añadir registro de usuario
   AdminMenu: undefined;
-  OrderSummary: undefined;
+  Cart: undefined;
+  UserR: undefined;
 };
 
 const TabNavigator: React.FC = () => {
@@ -95,8 +99,9 @@ const TabNavigator: React.FC = () => {
     <>
       <Header
         onLoginPress={() => navigation.navigate('Inicio de Sesion')}
-        onOrderPress={() => navigation.navigate('OrderSummary')}
+        onOrderPress={() => navigation.navigate('Cart')}
         onLogoutPress={isAuthenticated ? handleLogout : undefined}
+        onUserRegistrationPress={() => navigation.navigate('UserR')}
         isAuthenticated={isAuthenticated}
       />
       {isAuthenticated ? (
@@ -169,20 +174,13 @@ const TabNavigator: React.FC = () => {
                   ),
                 }}
               />
-              <Tab.Screen
-                name="Orden"
-                component={OrderSummary}
-                options={{
-                  tabBarIcon: ({ color }) => (
-                    <Icon name="cart" type="ionicon" color={color} />
-                  ),
-                }}
-              />
             </>
           )}
         </Tab.Navigator>
       ) : (
-        <LoginScreen /> 
+        <>
+          <LoginScreen /> 
+        </>
       )}
     </>
   );

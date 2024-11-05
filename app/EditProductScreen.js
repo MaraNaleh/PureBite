@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image } from 'react-native';
-import { db } from '../constants/firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
+import React, { useState } from 'react'; 
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { db } from '../constants/firebaseConfig'; // Importa tu configuración de Firebase
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 export default function EditProductScreen({ route, navigation }) {
-  const { product, isAdmin } = route.params; // Obtener el producto y el estado de admin
+  const { product } = route.params; // Obtiene el producto a editar
   const [nombre, setNombre] = useState(product.nombre);
   const [descripcion, setDescripcion] = useState(product.descripcion);
-  const [precio, setPrecio] = useState(product.precio.toString());
+  const [precio, setPrecio] = useState(product.precio.toString()); // Convertir a string para TextInput
   const [categoria, setCategoria] = useState(product.categoria);
   const [disponible, setDisponible] = useState(product.disponible);
 
   const handleSave = async () => {
+    // Validación simple
     if (!nombre || !descripcion || !precio || !categoria) {
       Alert.alert("Error", "Todos los campos son obligatorios");
       return;
     }
 
+    // Conversión del precio
     const precioNum = parseFloat(precio);
     if (isNaN(precioNum)) {
       Alert.alert("Error", "El precio debe ser un número válido");
@@ -24,7 +26,8 @@ export default function EditProductScreen({ route, navigation }) {
     }
 
     try {
-      const productRef = doc(db, 'menuItems', product.itemId);
+      // Asegúrate de que product.id es el ID generado por Firebase
+      const productRef = doc(db, 'menuItems', product.id); // Usa el ID generado por Firebase
       await setDoc(productRef, { 
         nombre, 
         descripcion, 
@@ -33,22 +36,43 @@ export default function EditProductScreen({ route, navigation }) {
         disponible 
       }, { merge: true });
       Alert.alert("Éxito", "Producto actualizado correctamente");
-      navigation.goBack();
+      navigation.goBack(); // Regresa a la pantalla anterior
     } catch (error) {
       console.error("Error actualizando el producto: ", error);
       Alert.alert("Error", "No se pudo actualizar el producto");
     }
   };
 
+  const handleDelete = async () => {
+    Alert.alert(
+      "Confirmar Eliminación",
+      "¿Estás seguro de que deseas eliminar este producto?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        { 
+          text: "Eliminar", 
+          onPress: async () => {
+            try {
+              const productRef = doc(db, 'menuItems', product.id); // Usa el ID generado por Firebase
+              await deleteDoc(productRef); // Elimina el documento
+              Alert.alert("Éxito", "Producto eliminado correctamente");
+              navigation.goBack(); // Regresa a la pantalla anterior
+            } catch (error) {
+              console.error("Error eliminando el producto: ", error);
+              Alert.alert("Error", "No se pudo eliminar el producto");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Editar Producto</Text>
-
-      {/* Mostrar la imagen del producto si es modo admin */}
-      {isAdmin && product.imagenUrl && (
-        <Image source={{ uri: product.imagenUrl }} style={styles.productImage} />
-      )}
-
       <TextInput
         style={styles.input}
         value={nombre}
@@ -80,6 +104,10 @@ export default function EditProductScreen({ route, navigation }) {
         color="#FF6347"
       />
       <Button title="Guardar" onPress={handleSave} color="#556B2F" />
+      <Button title="Eliminar Producto" onPress={handleDelete} color="#FF0000" />
+      
+      {/* Botón de regresar */}
+      <Button title="Regresar" onPress={() => navigation.goBack()} color="#556B2F" />
     </View>
   );
 }
@@ -87,18 +115,5 @@ export default function EditProductScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0EAD6', padding: 20 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  input: { 
-    height: 40, 
-    borderColor: '#ccc', 
-    borderWidth: 1, 
-    borderRadius: 8, 
-    paddingHorizontal: 10, 
-    marginBottom: 16 
-  },
-  productImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
+  input: { height: 40, borderColor: '#ccc', borderWidth: 1, marginBottom: 20, paddingHorizontal: 10 },
 });

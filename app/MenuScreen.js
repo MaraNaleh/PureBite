@@ -1,19 +1,17 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../constants/firebaseConfig'; // Asegúrate de tener configurada la importación de Firebase correctamente
+import { db } from '../constants/firebaseConfig';
 import { getAuth } from 'firebase/auth';
 
 export default function MenuScreen({ navigation }) {
   const [orderedItems, setOrderedItems] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null); // Estado para almacenar el usuario actual
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
-    
-    // Escuchar cambios en el estado de autenticación
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
     });
@@ -33,20 +31,20 @@ export default function MenuScreen({ navigation }) {
 
     fetchProductos();
 
-    return () => unsubscribe(); // Limpiar el listener al desmontar el componente
+    return () => unsubscribe();
   }, []);
 
   const handleProductSelect = (product) => {
     if (!currentUser) {
       Alert.alert("Error", "Debes iniciar sesión para continuar.");
-      return; // Salir si currentUser es null
+      return;
     }
 
     navigation.navigate('ProductDetail', { 
       product: product, 
       orderedItems: orderedItems,
       setOrderedItems: setOrderedItems, 
-      userId: currentUser.uid, // Accede a uid solo si currentUser es válido
+      userId: currentUser.uid,
     });
   };
 
@@ -63,6 +61,7 @@ export default function MenuScreen({ navigation }) {
           <Text style={styles.categoryTitle}>{category}</Text>
           <FlatList
             horizontal
+            nestedScrollEnabled // Habilita el desplazamiento dentro de un ScrollView
             data={productos.filter(producto => producto.categoria === category)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
