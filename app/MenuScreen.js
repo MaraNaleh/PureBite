@@ -1,14 +1,23 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../constants/firebaseConfig';// Asegúrate de tener configurada la importación de Firebase correctamente
+import { db } from '../constants/firebaseConfig'; // Asegúrate de tener configurada la importación de Firebase correctamente
+import { getAuth } from 'firebase/auth';
 
 export default function MenuScreen({ navigation }) {
   const [orderedItems, setOrderedItems] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null); // Estado para almacenar el usuario actual
 
   useEffect(() => {
+    const auth = getAuth();
+    
+    // Escuchar cambios en el estado de autenticación
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      setCurrentUser(user);
+    });
+
     const fetchProductos = async () => {
       try {
         const productosCollection = collection(db, 'menuItems');
@@ -23,13 +32,21 @@ export default function MenuScreen({ navigation }) {
     };
 
     fetchProductos();
+
+    return () => unsubscribe(); // Limpiar el listener al desmontar el componente
   }, []);
 
   const handleProductSelect = (product) => {
+    if (!currentUser) {
+      Alert.alert("Error", "Debes iniciar sesión para continuar.");
+      return; // Salir si currentUser es null
+    }
+
     navigation.navigate('ProductDetail', { 
       product: product, 
       orderedItems: orderedItems,
-      setOrderedItems: setOrderedItems 
+      setOrderedItems: setOrderedItems, 
+      userId: currentUser.uid, // Accede a uid solo si currentUser es válido
     });
   };
 

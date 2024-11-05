@@ -1,8 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { db } from '../constants/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
+const auth = getAuth();
+const currentUser = auth.currentUser; 
 
 export default function Top5Screen({ navigation }) {
   const [topProductos, setTopProductos] = useState([]);
@@ -16,7 +19,7 @@ export default function Top5Screen({ navigation }) {
         const productosList = productosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Filtra y ordena los productos por rating, luego toma los 5 mejores
-        const sortedProductos = productosList.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        const sortedProductos = productosList.sort((a, b) => (b.favoritos || 0) - (a.favoritos || 0)); // Cambié a favoritos
         const top5 = sortedProductos.slice(0, 5);
 
         console.log('Top 5 Productos:', top5); // Verifica los datos aquí
@@ -43,7 +46,7 @@ export default function Top5Screen({ navigation }) {
         data={topProductos}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })}>
+          <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item, userId: currentUser.uid })}>
             <View style={styles.productCard}>
               {item.imagenUrl ? (
                 <Image source={{ uri: item.imagenUrl }} style={styles.productImage} />
@@ -54,7 +57,7 @@ export default function Top5Screen({ navigation }) {
                 <Text style={styles.productName}>{item.nombre || 'Sin nombre'}</Text>
                 <View style={styles.ratingContainer}>
                   {[...Array(5)].map((_, i) => (
-                    <Text key={i} style={{ color: i < (item.rating || 0) ? '#FFD700' : '#ccc' }}>★</Text>
+                    <Text key={i} style={{ color: i < (item.favoritos || 0) ? '#FFD700' : '#ccc' }}>★</Text>
                   ))}
                 </View>
                 <Text style={styles.productPrice}>{item.precio ? `${item.precio} Gs.` : 'Sin precio'}</Text>

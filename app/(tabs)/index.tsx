@@ -1,30 +1,76 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import AdminMenu from '../AdminMenu.js';
-import LoginScreen from '../LoginScreen.js';
-import MainScreen from '../MainScreen.js';
-import Top5Screen from '../Top5Screen.js';
-import MenuScreen from '../MenuScreen.js';
-import ProductDetailScreen from '../ProductDetailScreen.js';
-import Layout from './_layout';
+import { createStackNavigator } from '@react-navigation/stack';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../../constants/firebaseConfig';
+
+// Importa tus pantallas
+import LoginScreen from '../LoginScreen';
+import MenuScreen from '../MenuScreen';
+import MainScreen from '../MainScreen';
+import ProductDetailScreen from '../ProductDetailScreen';
 import OrderSummaryScreen from '../OrderSummaryScreen';
-import PaymentMethods from '../PaymentMethodsScreen';
-
-
-const Stack = createNativeStackNavigator();
+import AdminMenu from '../AdminMenu';
+import PaymentMethodsScreen from '../PaymentMethodsScreen';
+import CartScreen from '../CartScreen';
+const Stack = createStackNavigator();
 
 export default function App() {
+  const [userRole, setUserRole] = useState(null);
+  const [initializing, setInitializing] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          setUserRole(docSnap.data().rol);
+        }
+      } else {
+        setUserRole(null);
+      }
+      setInitializing(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (initializing) return null; // Muestra una pantalla de carga opcional
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Main">
-        <Stack.Screen name="AdminMenu" component={AdminMenu} />
-        <Stack.Screen name="Inicio de Sesion" component={LoginScreen} />
-        <Stack.Screen name="Menu" component={MenuScreen} />
-        <Stack.Screen name="Top5" component={Top5Screen} />
-        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-        <Stack.Screen name="OrderSummary" component={OrderSummaryScreen} />
-        <Stack.Screen name="PaymentMethods" component={PaymentMethods} />
+      <Stack.Navigator>
+        {userRole ? (
+          userRole === 'admin' ? (
+            // Navegación para Admin
+            <Stack.Group>
+              <Stack.Screen name="AdminMenu" component={AdminMenu} />
+              <Stack.Screen name="MainScreen" component={MainScreen} />
+              <Stack.Screen name="MenuScreen" component={MenuScreen} />
+              <Stack.Screen
+                name="ProductDetailScreen"
+                component={ProductDetailScreen}
+                initialParams={{ isAdmin: true }} // Propiedad para identificar a los administradores
+              />
+            </Stack.Group>
+          ) : (
+            // Navegación para Cliente
+            <Stack.Group>
+              <Stack.Screen name="MainScreen" component={MainScreen} />
+              <Stack.Screen name="MenuScreen" component={MenuScreen} />
+              <Stack.Screen name="ProductDetailScreen" component={ProductDetailScreen} initialParams={{ isAdmin: false }} />
+              <Stack.Screen name="OrderSummaryScreen" component={OrderSummaryScreen} />
+              <Stack.Screen name="Cart" component={CartScreen} />
+              <Stack.Screen name="Paymentmethods" component={PaymentMethodsScreen} />
+            </Stack.Group>
+          )
+        ) : (
+          // Navegación para el Login
+          <Stack.Screen name="LoginScreen" component={LoginScreen} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

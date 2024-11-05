@@ -1,19 +1,63 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../constants/firebaseConfig'; // Asegúrate de que esta ruta sea correcta
+import { auth, db } from '../constants/firebaseConfig'; // Asegúrate de que la ruta sea correcta
+import { doc, getDoc } from 'firebase/firestore'; // Asegúrate de importar getDoc
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    // Validaciones de entrada
+    if (!email || !password) {
+      Alert.alert('Error', 'Por favor ingresa tu correo y contraseña.');
+      return;
+    }
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('Bienvenido', 'Inicio de sesión exitoso');
-      navigation.navigate('MainScreen'); // Redirige a la pantalla principal
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Obtener el rol del usuario desde Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const { rol } = userDoc.data();
+
+        // Redirigir basado en el rol
+        if (rol === 'cliente') {
+          Alert.alert('Bienvenido', 'Inicio de sesión exitoso como Cliente');
+          navigation.navigate('MainScreen'); // Navegar a la pantalla principal del cliente
+        } else if (rol === 'admin') {
+          Alert.alert('Bienvenido', 'Inicio de sesión exitoso como Administrador');
+          navigation.navigate('AdminMenu'); // Navegar a la pantalla del administrador
+        } else {
+          Alert.alert('Error', 'Rol de usuario no válido.');
+        }
+      } else {
+        Alert.alert('Error', 'No se encontró el rol del usuario.');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Correo o contraseña incorrectos');
+      console.error("Error en inicio de sesión:", error); // Imprimir el error en consola
+      if (error.code === 'auth/user-not-found') {
+        Alert.alert('Error', 'No hay ningún usuario registrado con este correo.');
+      } else if (error.code === 'auth/wrong-password') {
+        Alert.alert('Error', 'La contraseña es incorrecta.');
+      } else if (error.code === 'auth/invalid-email') {
+        Alert.alert('Error', 'El correo electrónico es inválido.');
+      } else {
+        Alert.alert('Error', 'Ocurrió un error inesperado. Intenta nuevamente.');
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      Alert.alert('Éxito', 'Has cerrado sesión correctamente');
+      navigation.navigate('LoginScreen'); // Navegar a la pantalla de login
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo cerrar sesión');
     }
   };
 
@@ -41,6 +85,9 @@ const LoginScreen = ({ navigation }) => {
       <TouchableOpacity onPress={() => navigation.navigate('UserRegistration')}>
         <Text style={styles.registerText}>¿No tienes una cuenta? Regístrate</Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={handleLogout}>
+        <Text style={styles.logoutText}>Cerrar sesión</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -50,12 +97,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: '#556B2F',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -68,7 +115,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   loginButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#556B2F',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -80,7 +127,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   registerText: {
-    color: '#4CAF50',
+    color: '#556B2F',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  logoutText: {
+    color: '#FF6347',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 20,
